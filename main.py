@@ -1,0 +1,106 @@
+import os
+import pandas as pd
+
+from tqdm import tqdm
+
+from modules import webScraping
+from modules import domain_trimmer
+
+def get_links_cleaned(url):
+    links = webScraping.get_html_links(url)
+    links = set(links)
+
+    domains_full = []
+    domains_only = []
+
+
+    for link in links:
+        if link is not None:
+            a = domain_trimmer.link_cleanup(link)
+            if a is not None:
+                domains_full.append((a, link))
+                domains_only.append(a)
+    
+    domains_only = set(domains_only)
+
+    return domains_full, domains_only
+
+
+
+if __name__ == "__main__":
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    start_url = input("URL for link checking: ")
+    depth = int(input("Depth of search: "))
+
+    dont_search = []
+
+    dont_search.append(domain_trimmer.link_cleanup(start_url))
+
+    print("\n")
+
+    pandas_saved = []
+
+    try:
+        if depth >= 1:
+
+            current_domains = []
+
+            for i in range(depth):
+                print(f"\nSearching depth {i+1}")
+                unique_domains = []
+
+                if i == 0:
+                    current_domains_temp, unique_domains_temp = get_links_cleaned(start_url)
+                    if not current_domains_temp:
+                        raise Exception("Failed to fetch the start URL")
+                else:
+                    for domain in tqdm(current_domains, desc="Searching sub domains"):
+                        if domain[0] not in dont_search:
+                            current_domains_temp, unique_domains_temp = get_links_cleaned(domain[1])
+                            #dont_search.append(domain_trimmer.link_cleanup(domain[1]))
+
+                print(f"\nDepth {i+1} done")
+                print(f"Unique domains found: {len(unique_domains_temp)}")
+
+                current_domains = []
+
+                for domain, link in current_domains_temp:
+                    
+                    if domain not in dont_search:
+                        unique_domains.append(domain)
+                        current_domains.append((domain, link))
+            
+                df = pd.DataFrame(unique_domains, columns=['Domain'])
+
+                frequency_table = df['Domain'].value_counts().reset_index()
+
+                frequency_table.columns = ['Domain', 'Frequency']
+
+                print("\nDomain frequency table:")
+                print(frequency_table)
+
+                pandas_saved.append(frequency_table)
+
+    except Exception as e:
+
+        print(f"\nError occurred during crawling:")
+        print(f"{str(e)}")
+
+        if pandas_saved:
+            print("\nShowing results up to the last successful depth:")
+            for i, table in enumerate(pandas_saved):
+                print(f"\nDepth {i+1} results:")
+                print(table)
+
+    print("\n\nCrawling finished")
+    a = input("Want to save the data to a file? (y/n): ")
+
+    if a.lower() == "y":
+        if pandas_saved:
+            df = pd.concat(pandas_saved)
+            df.to_excel("domains.xlsx")
+            print("Data exported to domains.xlsx")
+        else:
+            print("No data to save")
