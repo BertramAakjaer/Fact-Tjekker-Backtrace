@@ -1,7 +1,5 @@
 import reliable_site_scraper as m
 
 
-url = "https://www.information.dk/debat/2021/10/tidligere-konspirationsteoretiker-derfor-droppede-kampen-sandheden"
+url = "https://www.nasa.gov/earth/how-do-we-know-the-earth-isnt-flat-we-asked-a-nasa-expert-episode-53/"
 temp, domain = m.is_url_reliable(url)
-
-print(f"Is the URL reliable? {temp}, {domain} was found in the whitelist.")
