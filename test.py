@@ -1,7 +1,7 @@
+import reliable_site_scraper as m
 
-a = []
 
-for i in range(100):
-    a.append((i, i/100))
+url = "https://www.information.dk/debat/2021/10/tidligere-konspirationsteoretiker-derfor-droppede-kampen-sandheden"
+temp, domain = m.is_url_reliable(url)
 
-print(a[1][1]) # 0.01
+print(f"Is the URL reliable? {temp}, {domain} was found in the whitelist.")
